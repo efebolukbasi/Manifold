@@ -1,0 +1,45 @@
+# Manifold Configuration Example
+# Copy this to manifold.toml to get started.
+
+[project]
+name = "my-project"
+path = "."
+
+# ─── Models ───────────────────────────────────────────────────────────
+# Configure your AI models. Each model needs:
+#   - role: architect | implementer | reviewer | executor | generalist
+#   - api_key_env: name of the environment variable containing the API key
+#   - model: the specific model identifier
+
+[models.claude]
+role = "architect"
+api_key_env = "ANTHROPIC_API_KEY"
+model = "claude-sonnet-4-20250514"
+
+[models.gemini]
+role = "implementer"
+api_key_env = "GEMINI_API_KEY"
+model = "gemini-2.5-pro"
+
+[models.openai]
+role = "reviewer"
+api_key_env = "OPENAI_API_KEY"
+model = "gpt-4o"
+
+# ─── Orchestration ────────────────────────────────────────────────────
+# How models work together.
+
+[orchestration]
+mode = "collaborative"         # solo | collaborative | autonomous | consensus | pipeline
+context_sharing = true         # All models see each other's output
+auto_delegate = true           # Orchestrator can auto-assign tasks to models
+
+# ─── Tools ────────────────────────────────────────────────────────────
+# What tools are available to the AI models.
+
+[tools]
+enable_file_system = true
+enable_shell = true
+enable_git = true
+enable_mcp = false
+exclude_paths = ["node_modules", ".git", "dist", "build", "__pycache__"]
