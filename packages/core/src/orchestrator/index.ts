@@ -13,6 +13,8 @@ import type {
   StreamEvent,
   ToolResult,
   PaneState,
+  Session,
+  WorklogEntry,
 } from "@manifold/sdk";
 import {
   BaseAdapter,
@@ -24,7 +26,7 @@ import {
 } from "@manifold/sdk";
 import { MessageBus } from "../message-bus/index.js";
 import { ContextManager } from "../context/index.js";
-import { SessionManager } from "../session/index.js";
+import { SessionManager, type WorklogUpdate } from "../session/index.js";
 import { ToolRegistry } from "../tools/index.js";
 import { PaneManager } from "../panes/index.js";
 
@@ -51,7 +53,9 @@ export class Orchestrator {
 
     this.messageBus = new MessageBus();
     this.contextManager = new ContextManager();
-    this.sessionManager = new SessionManager();
+    this.sessionManager = new SessionManager({
+      projectRoot: options.projectRoot,
+    });
     this.toolRegistry = new ToolRegistry(options.projectRoot);
     this.paneManager = new PaneManager();
 
@@ -66,7 +70,11 @@ export class Orchestrator {
   }
 
   async initialize(): Promise<void> {
-    this.sessionManager.createSession(this.config.project.name, this.mode);
+    const session = this.sessionManager.createSession(
+      this.config.project.name,
+      this.mode
+    );
+    this.hydrateFromSession(session);
 
     const initPromises: Promise<void>[] = [];
     for (const [id, adapter] of this.adapters) {
@@ -92,6 +100,16 @@ export class Orchestrator {
     this.paneManager.initialize(readyModelIds, this.activeModelId);
     this.activeModelId = this.paneManager.getActiveModelId();
     this.syncPaneSession();
+  }
+
+  recordWorklog(update: WorklogUpdate): WorklogEntry {
+    const entry = this.sessionManager.upsertWorklog(update);
+    this.contextManager.addWorklog(entry);
+    return entry;
+  }
+
+  getWorklog(count?: number): WorklogEntry[] {
+    return this.sessionManager.getWorklog(count);
   }
 
   setActiveModel(modelId: string): void {
@@ -289,6 +307,22 @@ export class Orchestrator {
     this.sessionManager.setActivePane(this.paneManager.getActivePaneId());
   }
 
+  private hydrateFromSession(session: Session): void {
+    this.messageBus.loadHistory(session.messages);
+
+    for (const message of session.messages) {
+      this.contextManager.addMessage(message);
+    }
+
+    for (const task of session.tasks) {
+      this.contextManager.addTask(task);
+    }
+
+    for (const entry of session.worklog) {
+      this.contextManager.addWorklog(entry);
+    }
+  }
+
   private getMessagesForPaneModel(
     paneId: number,
     modelId: string
@@ -402,6 +436,7 @@ export class Orchestrator {
 
     const role = adapter.getRole();
     const contextSummary = this.contextManager.getSummary();
+    const recentWorklog = this.contextManager.getWorklog(8);
     const readyModels = this.getReadyModels();
     const otherModels = readyModels
       .filter((model) => model.id !== modelId)
@@ -425,8 +460,30 @@ export class Orchestrator {
     }
 
     parts.push(
-      `Context: ${contextSummary.fileCount} files, ${contextSummary.messageCount} messages, ${contextSummary.taskCount} tasks`
+      `Context: ${contextSummary.fileCount} files, ${contextSummary.messageCount} messages, ${contextSummary.taskCount} tasks, ${contextSummary.worklogCount} worklog entries`
     );
+
+    if (recentWorklog.length > 0) {
+      parts.push(
+        `Shared work log:\n${recentWorklog
+          .map((entry) => {
+            const owner = entry.modelId ?? entry.createdBy;
+            const pane =
+              entry.paneId !== undefined ? ` pane:${entry.paneId}` : "";
+            const files =
+              entry.files && entry.files.length > 0
+                ? ` files:${entry.files.join(", ")}`
+                : "";
+            const blockers =
+              entry.blockers && entry.blockers.length > 0
+                ? ` blockers:${entry.blockers.join(" | ")}`
+                : "";
+            const nextStep = entry.nextStep ? ` next:${entry.nextStep}` : "";
+            return `- [${entry.status}] ${owner}${pane}: ${entry.title} - ${entry.summary}${files}${blockers}${nextStep}`;
+          })
+          .join("\n")}`
+      );
+    }
 
     const rules = this.contextManager.getRules();
     if (rules.length > 0) {

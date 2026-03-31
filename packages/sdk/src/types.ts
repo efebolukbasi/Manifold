@@ -64,6 +64,7 @@ export interface ContextSlice {
   files?: FileContext[];
   messages?: ManifoldMessage[];
   tasks?: TaskNode[];
+  worklog?: WorklogEntry[];
   rules?: string[];
   custom?: Record<string, unknown>;
 }
@@ -92,6 +93,29 @@ export interface TaskNode {
   createdBy: string;
   subtasks?: TaskNode[];
   result?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type WorklogStatus =
+  | "planned"
+  | "in_progress"
+  | "blocked"
+  | "completed"
+  | "handoff";
+
+export interface WorklogEntry {
+  id: string;
+  title: string;
+  summary: string;
+  status: WorklogStatus;
+  createdBy: string;
+  modelId?: string;
+  paneId?: number;
+  taskId?: string;
+  files?: string[];
+  blockers?: string[];
+  nextStep?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -180,6 +204,7 @@ export interface Session {
   lastActiveAt: string;
   messages: ManifoldMessage[];
   tasks: TaskNode[];
+  worklog: WorklogEntry[];
   activeModels: string[];
   orchestrationMode: OrchestrationMode;
   panes: PaneState[];

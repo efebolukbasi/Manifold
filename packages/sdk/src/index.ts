@@ -17,6 +17,8 @@ export type {
   FileContext,
   TaskStatus,
   TaskNode,
+  WorklogStatus,
+  WorklogEntry,
   ToolDefinition,
   ToolParameter,
   ToolCall,

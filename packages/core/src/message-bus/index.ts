@@ -115,6 +115,13 @@ export class MessageBus extends EventEmitter {
   }
 
   /**
+   * Replace message history without emitting events.
+   */
+  loadHistory(messages: ManifoldMessage[]): void {
+    this.messageLog = [...messages];
+  }
+
+  /**
    * Clear message history.
    */
   clearHistory(): void {
