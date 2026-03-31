@@ -61,3 +61,24 @@ export interface WorklogEntryDraft {
   blockers?: string[];
   nextStep?: string;
 }
+
+// ── Bridge / Chat types ─────────────────────────────────────────────
+
+export interface ChatMessage {
+  role: "user" | "assistant";
+  content: string;
+  timestamp: string;
+}
+
+export interface BridgeModel {
+  id: string;
+  name: string;
+}
+
+export type StreamEventData =
+  | { type: "text_delta"; content: string }
+  | { type: "tool_call_start"; toolCall: unknown }
+  | { type: "tool_call_delta"; callId: string; content: string }
+  | { type: "tool_call_end"; callId: string }
+  | { type: "message_complete"; message: unknown }
+  | { type: "error"; error: string };
