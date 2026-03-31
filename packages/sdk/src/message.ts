@@ -16,6 +16,7 @@ export function createMessage(
     to: string | "all";
     type: MessageType;
     content: string;
+    paneId?: number;
     context?: ContextSlice;
     taskId?: string;
     priority?: number;
@@ -31,6 +32,7 @@ export function createMessage(
     content: params.content,
     context: params.context,
     metadata: {
+      paneId: params.paneId,
       taskId: params.taskId,
       priority: params.priority,
       requiresResponse: params.requiresResponse,
@@ -45,13 +47,15 @@ export function createMessage(
  */
 export function createUserMessage(
   content: string,
-  to: string | "all" = "all"
+  to: string | "all" = "all",
+  paneId?: number
 ): ManifoldMessage {
   return createMessage({
     from: "user",
     to,
     type: "query",
     content,
+    paneId,
   });
 }
 
@@ -60,13 +64,15 @@ export function createUserMessage(
  */
 export function createSystemMessage(
   content: string,
-  to: string | "all" = "all"
+  to: string | "all" = "all",
+  paneId?: number
 ): ManifoldMessage {
   return createMessage({
     from: "orchestrator",
     to,
     type: "system",
     content,
+    paneId,
   });
 }
 
@@ -77,7 +83,8 @@ export function createDelegationMessage(
   from: string,
   to: string,
   content: string,
-  taskId?: string
+  taskId?: string,
+  paneId?: number
 ): ManifoldMessage {
   return createMessage({
     from,
@@ -85,6 +92,7 @@ export function createDelegationMessage(
     type: "delegate",
     content,
     taskId,
+    paneId,
     requiresResponse: true,
   });
 }
@@ -95,13 +103,15 @@ export function createDelegationMessage(
 export function createErrorMessage(
   from: string,
   content: string,
-  to: string | "all" = "all"
+  to: string | "all" = "all",
+  paneId?: number
 ): ManifoldMessage {
   return createMessage({
     from,
     to,
     type: "error",
     content,
+    paneId,
   });
 }
 

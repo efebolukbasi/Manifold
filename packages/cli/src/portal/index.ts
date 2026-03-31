@@ -1,5 +1,6 @@
 import { spawn } from "node:child_process";
 import { createInterface } from "node:readline/promises";
+import type { ModelConfig } from "@manifold/sdk";
 
 export interface PortalProvider {
   id: "codex" | "claude" | "gemini";
@@ -33,6 +34,8 @@ const PORTAL_PROVIDERS: PortalProvider[] = [
   },
 ];
 
+const EMBEDDED_PORTAL_PROVIDER_IDS = new Set<PortalProvider["id"]>(["codex"]);
+
 export async function detectInstalledPortalProviders(): Promise<PortalProvider[]> {
   const providers = await Promise.all(
     PORTAL_PROVIDERS.map(async (provider) => {
@@ -44,6 +47,36 @@ export async function detectInstalledPortalProviders(): Promise<PortalProvider[]
   return providers.filter(
     (provider): provider is PortalProvider => provider !== null
   );
+}
+
+export function supportsEmbeddedPortalProvider(providerId: string): boolean {
+  return EMBEDDED_PORTAL_PROVIDER_IDS.has(providerId as PortalProvider["id"]);
+}
+
+export function buildEmbeddedPortalModels(
+  providers: PortalProvider[]
+): Record<string, ModelConfig> {
+  const models: Record<string, ModelConfig> = {};
+
+  for (const provider of providers) {
+    if (!supportsEmbeddedPortalProvider(provider.id)) {
+      continue;
+    }
+
+    models[provider.id] = {
+      id: provider.id,
+      name: provider.name,
+      role: "generalist",
+      model: `${provider.id}-portal-cli`,
+      apiKeyEnv: `${provider.id.toUpperCase()}_PORTAL_LOGIN`,
+      providerConfig: {
+        transport: "portal-cli",
+        provider: provider.id,
+      },
+    };
+  }
+
+  return models;
 }
 
 export function getPortalProvider(id: string): PortalProvider | undefined {
