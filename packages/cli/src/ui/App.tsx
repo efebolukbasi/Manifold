@@ -238,7 +238,7 @@ export const App: React.FC<AppProps> = ({ orchestrator }) => {
         }
 
         orchestrator.messageBus.publish(
-          createDelegationMessage(fromModel, toModel, content)
+          createDelegationMessage(fromModel, toModel, content, undefined, activePaneId)
         );
         setFeedback(`Delegated from ${fromModel} to ${toModel}.`);
         return;
@@ -275,6 +275,7 @@ export const App: React.FC<AppProps> = ({ orchestrator }) => {
         return;
 
       case "clear":
+        orchestrator.messageBus.clearHistory();
         setMessages([]);
         setFeedback("Cleared local pane history.");
         return;
@@ -322,15 +323,7 @@ export const App: React.FC<AppProps> = ({ orchestrator }) => {
         assignedModelId={pane.modelId}
         assignedModelLabel={pane.modelId ?? "unassigned"}
         status={pane.status}
-        messages={messages.filter((message) => {
-          if (!pane.modelId) {
-            return false;
-          }
-          if (message.to === "all") {
-            return true;
-          }
-          return message.from === pane.modelId || message.to === pane.modelId;
-        })}
+        messages={orchestrator.getPaneMessages(pane.id)}
       />
     );
   }

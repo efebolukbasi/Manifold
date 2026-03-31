@@ -46,6 +46,7 @@ export interface ManifoldMessage {
 }
 
 export interface MessageMetadata {
+  paneId?: number;
   taskId?: string;
   priority?: number;
   requiresResponse?: boolean;

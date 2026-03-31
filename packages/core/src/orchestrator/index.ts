@@ -167,12 +167,7 @@ export class Orchestrator {
       return [];
     }
 
-    return this.messageBus.getHistory().filter((message) => {
-      if (message.to === "all") {
-        return true;
-      }
-      return message.from === pane.modelId || message.to === pane.modelId;
-    });
+    return this.getMessagesForPaneModel(paneId, pane.modelId);
   }
 
   async chat(userInput: string): Promise<ManifoldMessage> {
@@ -224,10 +219,10 @@ export class Orchestrator {
         throw new Error(`Model "${targetModel}" is not ready`);
       }
 
-      const userMessage = createUserMessage(userInput, targetModel);
+      const userMessage = createUserMessage(userInput, targetModel, paneId);
       this.messageBus.publish(userMessage);
 
-      const allMessages = this.getMessagesForModel(targetModel);
+      const allMessages = this.getMessagesForPaneModel(paneId, targetModel);
       const systemPrompt = this.buildSystemPrompt(targetModel);
       const options: SendMessageOptions = {
         tools: this.toolRegistry.getAll(),
@@ -294,12 +289,16 @@ export class Orchestrator {
     this.sessionManager.setActivePane(this.paneManager.getActivePaneId());
   }
 
-  private getMessagesForModel(modelId: string): ManifoldMessage[] {
+  private getMessagesForPaneModel(
+    paneId: number,
+    modelId: string
+  ): ManifoldMessage[] {
     return this.messageBus.getHistory().filter(
       (message) =>
-        message.to === modelId ||
         message.to === "all" ||
-        message.from === modelId
+        message.metadata.paneId === paneId ||
+        ((message.to === modelId || message.from === modelId) &&
+          message.metadata.paneId === undefined)
     );
   }
 
@@ -314,10 +313,11 @@ export class Orchestrator {
 
     this.activeModelId = targetModel;
 
-    const userMessage = createUserMessage(userInput, targetModel);
+    const paneId = this.paneManager.getActivePaneId();
+    const userMessage = createUserMessage(userInput, targetModel, paneId);
     this.messageBus.publish(userMessage);
 
-    const allMessages = this.getMessagesForModel(targetModel);
+    const allMessages = this.getMessagesForPaneModel(paneId, targetModel);
     const systemPrompt = this.buildSystemPrompt(targetModel);
     const options: SendMessageOptions = {
       tools: this.toolRegistry.getAll(),
@@ -327,9 +327,18 @@ export class Orchestrator {
 
     const response = await adapter.sendMessage(allMessages, options);
     if (response.finishReason === "tool_calls" && response.toolCalls) {
-      return this.handleToolCalls(targetModel, adapter, allMessages, response, options);
+      return this.handleToolCalls(
+        targetModel,
+        adapter,
+        allMessages,
+        response,
+        options,
+        0,
+        paneId
+      );
     }
 
+    response.message.metadata.paneId = paneId;
     this.messageBus.publish(response.message);
     return response.message;
   }
@@ -340,12 +349,15 @@ export class Orchestrator {
     messages: ManifoldMessage[],
     response: AdapterResponse,
     options: SendMessageOptions,
-    depth = 0
+    depth = 0,
+    paneId?: number
   ): Promise<ManifoldMessage> {
     if (depth > 10) {
       const errorMessage = createErrorMessage(
         modelId,
-        "Maximum tool call depth exceeded"
+        "Maximum tool call depth exceeded",
+        "all",
+        paneId
       );
       this.messageBus.publish(errorMessage);
       return errorMessage;
@@ -372,10 +384,12 @@ export class Orchestrator {
         messages,
         followUp,
         options,
-        depth + 1
+        depth + 1,
+        paneId
       );
     }
 
+    followUp.message.metadata.paneId = paneId;
     this.messageBus.publish(followUp.message);
     return followUp.message;
   }

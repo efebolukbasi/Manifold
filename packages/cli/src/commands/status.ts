@@ -6,27 +6,40 @@
  */
 
 import { loadConfig } from "../config/index.js";
-import { detectInstalledPortalProviders } from "../portal/index.js";
+import {
+  buildEmbeddedPortalModels,
+  detectInstalledPortalProviders,
+} from "../portal/index.js";
 
 export async function statusCommand(): Promise<void> {
   const projectDir = process.cwd();
   const config = await loadConfig(projectDir);
   const installedPortalProviders = await detectInstalledPortalProviders();
+  const embeddedPortalModels = buildEmbeddedPortalModels(installedPortalProviders);
+  const availableModels = {
+    ...embeddedPortalModels,
+    ...config.models,
+  };
 
   console.log("\nMANIFOLD STATUS\n");
   console.log(`  Project:  ${config.project.name}`);
   console.log(`  Path:     ${config.project.path}`);
   console.log(`  Mode:     ${config.orchestration.mode}`);
 
-  const modelKeys = Object.keys(config.models);
+  const modelKeys = Object.keys(availableModels);
   if (modelKeys.length === 0) {
     console.log("\n  No API-key models detected.\n");
   } else {
     console.log(`\n  Models (${modelKeys.length}):`);
-    for (const [id, model] of Object.entries(config.models)) {
-      const keySet = !!process.env[model.apiKeyEnv];
+    for (const [id, model] of Object.entries(availableModels)) {
+      const isPortalModel = model.providerConfig?.transport === "portal-cli";
+      const keySet = isPortalModel ? true : !!process.env[model.apiKeyEnv];
       const status = keySet ? "OK" : "MISSING";
-      const suffix = keySet ? "" : " (key missing)";
+      const suffix = isPortalModel
+        ? " (portal login)"
+        : keySet
+          ? ""
+          : " (key missing)";
       console.log(`    ${status} ${id} - ${model.model} [${model.role}]${suffix}`);
     }
   }
