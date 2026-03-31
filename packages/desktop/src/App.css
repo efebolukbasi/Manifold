@@ -1,0 +1,166 @@
+@import "@xterm/xterm/css/xterm.css";
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  overflow: hidden;
+}
+
+.app {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  font-family: "Inter", "Segoe UI", -apple-system, sans-serif;
+  user-select: none;
+}
+
+/* ── Header ─────────────────────────────────────────── */
+
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  height: 44px;
+  flex-shrink: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo {
+  font-size: 18px;
+}
+
+.title {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+.header-center {
+  display: flex;
+  gap: 2px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 6px;
+  padding: 2px;
+}
+
+.layout-btn {
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  padding: 5px 12px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: inherit;
+  transition: all 0.15s ease;
+  letter-spacing: 0.5px;
+}
+
+.layout-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.layout-btn.active {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.theme-select {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-family: inherit;
+  cursor: pointer;
+  outline: none;
+}
+
+.theme-select:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* ── Terminal Grid ──────────────────────────────────── */
+
+.terminal-grid {
+  flex: 1;
+  display: grid;
+  gap: 1px;
+  min-height: 0;
+}
+
+.terminal-pane {
+  overflow: hidden;
+  position: relative;
+  border: 1px solid transparent;
+  transition: border-color 0.15s ease;
+}
+
+.terminal-pane .xterm {
+  height: 100%;
+  padding: 4px;
+}
+
+.terminal-pane .xterm-viewport {
+  overflow-y: hidden !important;
+}
+
+.terminal-pane .pane-label {
+  position: absolute;
+  top: 6px;
+  right: 10px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  opacity: 0.3;
+  pointer-events: none;
+  z-index: 10;
+  font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", monospace;
+}
+
+/* ── Status Bar ─────────────────────────────────────── */
+
+.status-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  font-size: 11px;
+  height: 26px;
+  flex-shrink: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.status-bar .status-left,
+.status-bar .status-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.status-bar .status-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  margin-right: 6px;
+}
