@@ -11,12 +11,14 @@ import type {
   FileContext,
   TaskNode,
   ManifoldMessage,
+  WorklogEntry,
 } from "@manifold/sdk";
 
 export class ContextManager {
   private files = new Map<string, FileContext>();
   private conversationMemory: ManifoldMessage[] = [];
   private tasks: TaskNode[] = [];
+  private worklog: WorklogEntry[] = [];
   private rules: string[] = [];
   private customContext = new Map<string, unknown>();
   private maxMemoryMessages = 200;
@@ -110,6 +112,29 @@ export class ContextManager {
   }
 
   /**
+   * Add or update a worklog entry.
+   */
+  addWorklog(entry: WorklogEntry): void {
+    const index = this.worklog.findIndex((item) => item.id === entry.id);
+    if (index === -1) {
+      this.worklog.push(entry);
+      return;
+    }
+
+    this.worklog[index] = entry;
+  }
+
+  /**
+   * Get recent worklog entries.
+   */
+  getWorklog(count?: number): WorklogEntry[] {
+    if (count) {
+      return this.worklog.slice(-count);
+    }
+    return [...this.worklog];
+  }
+
+  /**
    * Add a project rule/constraint.
    */
   addRule(rule: string): void {
@@ -165,6 +190,7 @@ export class ContextManager {
       files,
       messages: this.conversationMemory.slice(-maxMessages),
       tasks: this.tasks,
+      worklog: this.worklog.slice(-20),
       rules: this.rules,
       custom: Object.fromEntries(this.customContext),
     };
@@ -177,6 +203,7 @@ export class ContextManager {
     this.files.clear();
     this.conversationMemory = [];
     this.tasks = [];
+    this.worklog = [];
     this.rules = [];
     this.customContext.clear();
   }
@@ -185,15 +212,17 @@ export class ContextManager {
    * Get a summary of the context state.
    */
   getSummary(): {
-    fileCount: number;
-    messageCount: number;
-    taskCount: number;
-    ruleCount: number;
+      fileCount: number;
+      messageCount: number;
+      taskCount: number;
+      worklogCount: number;
+      ruleCount: number;
   } {
     return {
       fileCount: this.files.size,
       messageCount: this.conversationMemory.length,
       taskCount: this.tasks.length,
+      worklogCount: this.worklog.length,
       ruleCount: this.rules.length,
     };
   }

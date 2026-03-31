@@ -9,7 +9,7 @@ export { Orchestrator, type OrchestratorOptions } from "./orchestrator/index.js"
 export { ContextManager } from "./context/index.js";
 export { MessageBus, type MessageHandler, type MessageFilter } from "./message-bus/index.js";
 export { PaneManager } from "./panes/index.js";
-export { SessionManager } from "./session/index.js";
+export { SessionManager, type SessionManagerOptions, type WorklogUpdate } from "./session/index.js";
 export {
   ToolRegistry,
   FileSystemToolExecutor,

@@ -37,3 +37,6 @@ pnpm-debug.log*
 
 # Config (user-specific)
 manifold.toml
+
+# Local Manifold state
+.manifold/
