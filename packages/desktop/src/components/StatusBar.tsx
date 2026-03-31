@@ -1,11 +1,36 @@
 import type { LayoutPreset, Theme } from "../themes";
+import type { BridgeStatus } from "../hooks/useBridge";
+import type { BridgeModel } from "../session";
+import type { PaneMode } from "./TerminalGrid";
 
 interface StatusBarProps {
   layout: LayoutPreset;
+  activePaneId: number;
+  sessionId?: string;
   theme: Theme;
+  bridgeStatus: BridgeStatus;
+  bridgeModels: BridgeModel[];
+  bridgeError: string | null;
+  paneMode: PaneMode;
 }
 
-export function StatusBar({ layout, theme }: StatusBarProps) {
+const STATUS_COLORS: Record<BridgeStatus, string> = {
+  disconnected: "#666",
+  connecting: "#e5c07b",
+  ready: "#98c379",
+  error: "#e06c75",
+};
+
+export function StatusBar({
+  layout,
+  activePaneId,
+  sessionId,
+  theme,
+  bridgeStatus,
+  bridgeModels,
+  bridgeError,
+  paneMode,
+}: StatusBarProps) {
   return (
     <div
       className="status-bar"
@@ -22,8 +47,25 @@ export function StatusBar({ layout, theme }: StatusBarProps) {
         <span>
           {layout} pane{layout > 1 ? "s" : ""}
         </span>
+        <span>active pane {activePaneId + 1}</span>
+        <span style={{ textTransform: "uppercase", letterSpacing: 0.5 }}>
+          {paneMode}
+        </span>
       </div>
       <div className="status-right">
+        {/* Bridge status */}
+        <span>
+          <span
+            className="status-dot"
+            style={{ backgroundColor: STATUS_COLORS[bridgeStatus] }}
+          />
+          {bridgeStatus === "ready" && bridgeModels.length > 0
+            ? bridgeModels.map((m) => m.name).join(", ")
+            : bridgeStatus === "error"
+              ? bridgeError || "bridge error"
+              : bridgeStatus}
+        </span>
+        {sessionId && <span>session {sessionId.slice(0, 8)}</span>}
         <span>v0.1.0</span>
       </div>
     </div>

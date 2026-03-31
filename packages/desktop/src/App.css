@@ -21,6 +21,12 @@ body,
   user-select: none;
 }
 
+.workspace-shell {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+}
+
 /* ── Header ─────────────────────────────────────────── */
 
 header {
@@ -106,6 +112,185 @@ header {
   display: grid;
   gap: 1px;
   min-height: 0;
+}
+
+.worklog-panel {
+  width: 360px;
+  flex-shrink: 0;
+  border-left: 1px solid;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  gap: 14px;
+  overflow: hidden;
+}
+
+.worklog-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.worklog-kicker {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+}
+
+.worklog-meta h2 {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.worklog-project {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  gap: 12px;
+}
+
+.worklog-session-card {
+  border: 1px solid;
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: grid;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.worklog-card-label {
+  display: block;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  opacity: 0.65;
+  margin-bottom: 4px;
+}
+
+.worklog-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.worklog-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.worklog-form input,
+.worklog-form select,
+.worklog-form textarea {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  color: inherit;
+  padding: 9px 10px;
+  font: inherit;
+  outline: none;
+}
+
+.worklog-form textarea {
+  resize: vertical;
+  min-height: 72px;
+}
+
+.worklog-form input:focus,
+.worklog-form select:focus,
+.worklog-form textarea:focus {
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.worklog-save {
+  border: none;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.worklog-save:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.worklog-error {
+  color: #ff7b72;
+  font-size: 12px;
+}
+
+.worklog-history {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+}
+
+.worklog-history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.worklog-history-header h3 {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.worklog-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow: auto;
+  min-height: 0;
+  padding-right: 2px;
+}
+
+.worklog-entry {
+  border: 1px solid;
+  border-radius: 10px;
+  padding: 11px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.worklog-entry-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 12px;
+}
+
+.worklog-entry-meta {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+.worklog-entry p {
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.worklog-next {
+  opacity: 0.78;
+}
+
+.worklog-empty {
+  font-size: 12px;
+  line-height: 1.45;
 }
 
 .terminal-pane {
