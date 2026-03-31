@@ -13,6 +13,11 @@ interface TerminalPaneProps {
   theme: Theme;
 }
 
+interface PtyAttachState {
+  bufferedOutput: string;
+  hasExited: boolean;
+}
+
 export function TerminalPane({
   paneId,
   isActive,
@@ -21,9 +26,6 @@ export function TerminalPane({
 }: TerminalPaneProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const termRef = useRef<Terminal | null>(null);
-  const fitRef = useRef<FitAddon | null>(null);
-  const ptyIdRef = useRef<string | null>(null);
-  const cleanupRef = useRef<(() => void) | null>(null);
 
   // Mount terminal + PTY
   useEffect(() => {
@@ -60,17 +62,36 @@ export function TerminalPane({
 
     fitAddon.fit();
     termRef.current = terminal;
-    fitRef.current = fitAddon;
 
     // Create PTY and wire up I/O
+    let isDisposed = false;
+    let ptyId: string | null = null;
     let outputUnlisten: (() => void) | undefined;
     let exitUnlisten: (() => void) | undefined;
 
-    (async () => {
+    const dataDisposable = terminal.onData((data) => {
+      if (ptyId) {
+        void invoke("write_pty", { id: ptyId, data });
+      }
+    });
+
+    const resizeDisposable = terminal.onResize(({ cols, rows }) => {
+      if (ptyId) {
+        void invoke("resize_pty", { id: ptyId, rows, cols });
+      }
+    });
+
+    void (async () => {
       try {
         const { cols, rows } = terminal;
         const id = await invoke<string>("create_pty", { rows, cols });
-        ptyIdRef.current = id;
+
+        if (isDisposed) {
+          void invoke("close_pty", { id });
+          return;
+        }
+
+        ptyId = id;
 
         outputUnlisten = await listen<string>(
           `pty-output-${id}`,
@@ -79,23 +100,27 @@ export function TerminalPane({
           },
         );
 
+        if (isDisposed) {
+          outputUnlisten();
+          void invoke("close_pty", { id });
+          return;
+        }
+
         exitUnlisten = await listen(`pty-exit-${id}`, () => {
           terminal.write("\r\n\x1b[90m[process exited]\x1b[0m\r\n");
         });
 
-        terminal.onData((data) => {
-          if (ptyIdRef.current) {
-            invoke("write_pty", { id: ptyIdRef.current, data });
-          }
-        });
-
-        terminal.onResize(({ cols, rows }) => {
-          if (ptyIdRef.current) {
-            invoke("resize_pty", { id: ptyIdRef.current, rows, cols });
-          }
-        });
+        const attachState = await invoke<PtyAttachState>("attach_pty", { id });
+        if (attachState.bufferedOutput) {
+          terminal.write(attachState.bufferedOutput);
+        }
+        if (attachState.hasExited) {
+          terminal.write("\r\n\x1b[90m[process exited]\x1b[0m\r\n");
+        }
       } catch (e) {
-        terminal.write(`\r\n\x1b[31mFailed to create PTY: ${e}\x1b[0m\r\n`);
+        if (!isDisposed) {
+          terminal.write(`\r\n\x1b[31mFailed to create PTY: ${e}\x1b[0m\r\n`);
+        }
       }
     })();
 
@@ -105,19 +130,19 @@ export function TerminalPane({
     });
     resizeObserver.observe(containerRef.current);
 
-    cleanupRef.current = () => {
+    return () => {
+      isDisposed = true;
       resizeObserver.disconnect();
+      dataDisposable.dispose();
+      resizeDisposable.dispose();
       outputUnlisten?.();
       exitUnlisten?.();
-      if (ptyIdRef.current) {
-        invoke("close_pty", { id: ptyIdRef.current });
-        ptyIdRef.current = null;
+      if (ptyId) {
+        void invoke("close_pty", { id: ptyId });
+        ptyId = null;
       }
+      termRef.current = null;
       terminal.dispose();
-    };
-
-    return () => {
-      cleanupRef.current?.();
     };
   }, []); // Mount once
 

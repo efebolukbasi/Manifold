@@ -14,6 +14,14 @@ fn create_pty(
 }
 
 #[tauri::command]
+fn attach_pty(
+    state: State<pty::PtyManager>,
+    id: String,
+) -> Result<pty::PtyAttachState, String> {
+    state.attach(&id)
+}
+
+#[tauri::command]
 fn write_pty(state: State<pty::PtyManager>, id: String, data: String) -> Result<(), String> {
     state.write(&id, data.as_bytes())
 }
@@ -38,7 +46,7 @@ pub fn run() {
     tauri::Builder::default()
         .manage(pty::PtyManager::new())
         .invoke_handler(tauri::generate_handler![
-            create_pty, write_pty, resize_pty, close_pty,
+            create_pty, attach_pty, write_pty, resize_pty, close_pty,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

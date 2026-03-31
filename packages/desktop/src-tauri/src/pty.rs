@@ -3,12 +3,23 @@ use std::io::{Read, Write};
 use std::sync::{Arc, Mutex};
 
 use portable_pty::{native_pty_system, CommandBuilder, MasterPty, PtySize};
+use serde::Serialize;
 use tauri::Emitter;
 
 struct PtyInstance {
     writer: Mutex<Box<dyn Write + Send>>,
     #[allow(dead_code)]
     master: Mutex<Box<dyn MasterPty + Send>>,
+    buffered_output: Mutex<String>,
+    is_attached: Mutex<bool>,
+    has_exited: Mutex<bool>,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PtyAttachState {
+    pub buffered_output: String,
+    pub has_exited: bool,
 }
 
 pub struct PtyManager {
@@ -61,20 +72,45 @@ impl PtyManager {
         let instance = Arc::new(PtyInstance {
             writer: Mutex::new(writer),
             master: Mutex::new(pair.master),
+            buffered_output: Mutex::new(String::new()),
+            is_attached: Mutex::new(false),
+            has_exited: Mutex::new(false),
         });
 
         {
             let mut instances = self.instances.lock().unwrap();
-            instances.insert(id.clone(), instance);
+            instances.insert(id.clone(), Arc::clone(&instance));
         }
 
         // Spawn a thread to read PTY output and emit events to the frontend
         let pty_id = id.clone();
         std::thread::spawn(move || {
-            Self::read_loop(reader, pty_id, app_handle);
+            Self::read_loop(reader, instance, pty_id, app_handle);
         });
 
         Ok(id)
+    }
+
+    pub fn attach(&self, id: &str) -> Result<PtyAttachState, String> {
+        let instances = self.instances.lock().unwrap();
+        let instance = instances.get(id).ok_or("PTY not found")?;
+
+        {
+            let mut is_attached = instance.is_attached.lock().unwrap();
+            *is_attached = true;
+        }
+
+        let buffered_output = {
+            let mut buffered_output = instance.buffered_output.lock().unwrap();
+            std::mem::take(&mut *buffered_output)
+        };
+
+        let has_exited = *instance.has_exited.lock().unwrap();
+
+        Ok(PtyAttachState {
+            buffered_output,
+            has_exited,
+        })
     }
 
     pub fn write(&self, id: &str, data: &[u8]) -> Result<(), String> {
@@ -107,6 +143,7 @@ impl PtyManager {
 
     fn read_loop(
         mut reader: Box<dyn Read + Send>,
+        instance: Arc<PtyInstance>,
         pty_id: String,
         app_handle: tauri::AppHandle,
     ) {
@@ -116,12 +153,26 @@ impl PtyManager {
                 Ok(0) => break,
                 Ok(n) => {
                     let data = String::from_utf8_lossy(&buf[..n]).to_string();
-                    let _ = app_handle.emit(&format!("pty-output-{}", pty_id), &data);
+                    let is_attached = *instance.is_attached.lock().unwrap();
+                    if is_attached {
+                        let _ = app_handle.emit(&format!("pty-output-{}", pty_id), &data);
+                    } else {
+                        let mut buffered_output =
+                            instance.buffered_output.lock().unwrap();
+                        buffered_output.push_str(&data);
+                    }
                 }
                 Err(_) => break,
             }
         }
-        let _ = app_handle.emit(&format!("pty-exit-{}", pty_id), ());
+        {
+            let mut has_exited = instance.has_exited.lock().unwrap();
+            *has_exited = true;
+        }
+
+        if *instance.is_attached.lock().unwrap() {
+            let _ = app_handle.emit(&format!("pty-exit-{}", pty_id), ());
+        }
     }
 
     #[cfg(target_os = "windows")]
