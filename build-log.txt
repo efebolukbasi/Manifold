@@ -1,0 +1,112 @@
+﻿node.exe : ΓÇó turbo 
+2.9.1
+At C:\Program 
+Files\nodejs\npx.ps1:29 
+char:3
++   & $NODE_EXE 
+$NPX_CLI_JS $args
++   ~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~
+    + CategoryInfo       
+       : NotSpecified:   
+  (ΓÇó turbo 2.9.1:Str   
+ ing) [], RemoteExcep    
+tion
+    + FullyQualifiedErro 
+   rId : NativeCommandE  
+  rror
+ 
+ WARNING  No locally 
+installed `turbo` found 
+in your repository. 
+Using globally installed 
+version (2.9.1). Using a 
+specified version in 
+your repository will 
+result in more 
+predictable behavior.
+
+   ΓÇó Packages in scope: @manifold/adapter-claude, @manifold/cli, @manifold/core, @manifold/sdk
+   ΓÇó Running build in 4 packages
+   ΓÇó Remote caching disabled
+
+@manifold/sdk:build: cache miss, executing 41a75d06eaf73b65
+@manifold/sdk:build: 
+@manifold/sdk:build: > @manifold/sdk@0.1.0 build C:\Users\boluk\Manifold\packages\sdk
+@manifold/sdk:build: > tsup src/index.ts --format esm --dts --clean
+@manifold/sdk:build: 
+@manifold/sdk:build: [34mCLI[39m Building entry: src/index.ts
+@manifold/sdk:build: [34mCLI[39m Using tsconfig: tsconfig.json
+@manifold/sdk:build: [34mCLI[39m tsup v8.5.1
+@manifold/sdk:build: [34mCLI[39m Target: es2022
+@manifold/sdk:build: [34mCLI[39m Cleaning output folder
+@manifold/sdk:build: [34mESM[39m Build start
+@manifold/sdk:build: [32mESM[39m [1mdist\index.js [22m[32m2.33 KB[39m
+@manifold/sdk:build: [32mESM[39m ΓÜí∩╕Å Build success in 42ms
+@manifold/sdk:build: [34mDTS[39m Build start
+@manifold/sdk:build: [32mDTS[39m ΓÜí∩╕Å Build success in 1235ms
+@manifold/sdk:build: [32mDTS[39m [1mdist\index.d.ts [22m[32m8.87 KB[39m
+@manifold/adapter-claude:build: cache miss, executing ab36ca1a75f103f0
+@manifold/core:build: cache miss, executing b3b1e8182845f3e1
+@manifold/core:build: 
+@manifold/core:build: > @manifold/core@0.1.0 build C:\Users\boluk\Manifold\packages\core
+@manifold/core:build: > tsup src/index.ts --format esm --dts --clean
+@manifold/core:build: 
+@manifold/adapter-claude:build: 
+@manifold/adapter-claude:build: > @manifold/adapter-claude@0.1.0 build C:\Users\boluk\Manifold\packages\adapters\claude
+@manifold/adapter-claude:build: > tsup src/index.ts --format esm --dts --clean
+@manifold/adapter-claude:build: 
+@manifold/core:build: [34mCLI[39m Building entry: src/index.ts
+@manifold/adapter-claude:build: [34mCLI[39m Building entry: src/index.ts
+@manifold/core:build: [34mCLI[39m Using tsconfig: tsconfig.json
+@manifold/core:build: [34mCLI[39m tsup v8.5.1
+@manifold/adapter-claude:build: [34mCLI[39m Using tsconfig: tsconfig.json
+@manifold/adapter-claude:build: [34mCLI[39m tsup v8.5.1
+@manifold/core:build: [34mCLI[39m Target: es2022
+@manifold/adapter-claude:build: [34mCLI[39m Target: es2022
+@manifold/core:build: [34mCLI[39m Cleaning output folder
+@manifold/core:build: [34mESM[39m Build start
+@manifold/adapter-claude:build: [34mCLI[39m Cleaning output folder
+@manifold/adapter-claude:build: [34mESM[39m Build start
+@manifold/adapter-claude:build: [32mESM[39m [1mdist\index.js [22m[32m5.73 KB[39m
+@manifold/adapter-claude:build: [32mESM[39m ΓÜí∩╕Å Build success in 53ms
+@manifold/core:build: [32mESM[39m [1mdist\index.js [22m[32m26.28 KB[39m
+@manifold/core:build: [32mESM[39m ΓÜí∩╕Å Build success in 64ms
+@manifold/adapter-claude:build: [34mDTS[39m Build start
+@manifold/core:build: [34mDTS[39m Build start
+@manifold/adapter-claude:build: [32mDTS[39m ΓÜí∩╕Å Build success in 2103ms
+@manifold/adapter-claude:build: [32mDTS[39m [1mdist\index.d.ts [22m[32m2.72 KB[39m
+@manifold/core:build: [32mDTS[39m ΓÜí∩╕Å Build success in 2266ms
+@manifold/core:build: [32mDTS[39m [1mdist\index.d.ts [22m[32m10.01 KB[39m
+@manifold/cli:build: cache miss, executing 093d7334fc01ef73
+@manifold/cli:build: 
+@manifold/cli:build: > @manifold/cli@0.1.0 build C:\Users\boluk\Manifold\packages\cli
+@manifold/cli:build: > tsup src/index.ts --format esm --clean --banner.js "#!/usr/bin/env node"
+@manifold/cli:build: 
+@manifold/cli:build: [31mCACError: Unknown option `--banner`
+@manifold/cli:build:     at Command.checkUnknownOptions (C:\Users\boluk\Manifold\node_modules\.pnpm\cac@6.7.14\node_modules\cac\dist\index.js:404:17)
+@manifold/cli:build:     at CAC.runMatchedCommand (C:\Users\boluk\Manifold\node_modules\.pnpm\cac@6.7.14\node_modules\cac\dist\index.js:602:13)
+@manifold/cli:build:     at main (C:\Users\boluk\Manifold\node_modules\.pnpm\tsup@8.5.1_tsx@4.21.0_typescript@5.9.3\node_modules\tsup\dist\chunk-DI5BO6XE.js:148:13)
+@manifold/cli:build:     at Object.<anonymous> (C:\Users\boluk\Manifold\node_modules\.pnpm\tsup@8.5.1_tsx@4.21.0_typescript@5.9.3\node_modules\tsup\dist\cli-default.js:12:23)
+@manifold/cli:build:     at Module._compile (node:internal/modules/cjs/loader:1730:14)
+@manifold/cli:build:     at Object..js (node:internal/modules/cjs/loader:1895:10)
+@manifold/cli:build:     at Module.load (node:internal/modules/cjs/loader:1465:32)
+@manifold/cli:build:     at Function._load (node:internal/modules/cjs/loader:1282:12)
+@manifold/cli:build:     at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+@manifold/cli:build:     at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)[39m
+@manifold/cli:build: ΓÇëELIFECYCLEΓÇë Command failed with exit code 1.
+ ERROR  
+@manifold/cli#build: 
+command (C:\Users\boluk\M
+anifold\packages\cli) C:\
+Users\boluk\AppData\Roami
+ng\npm\pnpm.cmd run 
+build exited (1)
+
+ Tasks:    3 successful, 4 total
+Cached:    0 cached, 4 total
+  Time:    8.945s 
+Failed:    @manifold/cli#build
+
+ ERROR  run failed: 
+command  exited (1)

@@ -1,0 +1,21 @@
+# Changelog
+
+All notable changes to Manifold will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [0.1.0] - 2026-03-30
+
+### Added
+
+- Initial project structure with pnpm + Turborepo monorepo
+- `@manifold/sdk` — Core types, base adapter class, message utilities
+- `@manifold/core` — Orchestrator, context manager, message bus, session manager, tool system
+- `@manifold/adapter-claude` — Anthropic Claude adapter with streaming support
+- `@manifold/cli` — CLI with Ink TUI, Commander.js commands
+- TOML configuration with auto-detection of available models
+- File system tools (read, write, list, exists)
+- Shell execution tool
+- Solo orchestration mode
+- Slash commands: `/model`, `/mode`, `/models`, `/clear`, `/help`
