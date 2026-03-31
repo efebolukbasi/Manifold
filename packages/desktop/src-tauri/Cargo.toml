@@ -6,7 +6,7 @@ description = "Manifold desktop application"
 
 [lib]
 name = "manifold_desktop_lib"
-crate-type = ["lib", "cdylib", "staticlib"]
+crate-type = ["lib"]
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
