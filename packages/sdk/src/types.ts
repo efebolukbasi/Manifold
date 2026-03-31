@@ -1,28 +1,18 @@
 /**
- * @manifold/sdk — Core type definitions
+ * @manifold/sdk - Core type definitions
  *
  * These types form the backbone of Manifold's inter-model communication
  * and adapter system. Every adapter and core module depends on these.
  */
 
-// ─── Model Configuration ────────────────────────────────────────────
-
 export interface ModelConfig {
-  /** Unique identifier for this model instance */
   id: string;
-  /** Display name (e.g. "Claude Sonnet") */
   name: string;
-  /** Role in the orchestration (architect, implementer, reviewer, executor) */
   role: ModelRole;
-  /** The actual model identifier sent to the API (e.g. "claude-sonnet-4") */
   model: string;
-  /** Environment variable name containing the API key */
   apiKeyEnv: string;
-  /** Provider-specific configuration */
   providerConfig?: Record<string, unknown>;
-  /** Max tokens for context window */
   maxContextTokens?: number;
-  /** Max tokens for output */
   maxOutputTokens?: number;
 }
 
@@ -32,8 +22,6 @@ export type ModelRole =
   | "reviewer"
   | "executor"
   | "generalist";
-
-// ─── Messages ────────────────────────────────────────────────────────
 
 export type MessageType =
   | "query"
@@ -47,30 +35,22 @@ export type MessageType =
   | "error";
 
 export interface ManifoldMessage {
-  /** Unique message ID */
   id: string;
-  /** Sender: model ID, "user", or "orchestrator" */
   from: string;
-  /** Target: model ID or "all" for broadcast */
   to: string | "all";
-  /** Message type */
   type: MessageType;
-  /** Message content (text) */
   content: string;
-  /** Relevant context slice */
   context?: ContextSlice;
-  /** Metadata */
   metadata: MessageMetadata;
-  /** ISO timestamp */
   timestamp: string;
 }
 
 export interface MessageMetadata {
+  paneId?: number;
   taskId?: string;
   priority?: number;
   requiresResponse?: boolean;
   parentMessageId?: string;
-  /** Token usage for this message */
   tokenUsage?: TokenUsage;
 }
 
@@ -80,18 +60,11 @@ export interface TokenUsage {
   totalTokens: number;
 }
 
-// ─── Context ─────────────────────────────────────────────────────────
-
 export interface ContextSlice {
-  /** Relevant file contents or summaries */
   files?: FileContext[];
-  /** Recent conversation history */
   messages?: ManifoldMessage[];
-  /** Current task tree state */
   tasks?: TaskNode[];
-  /** Project-level rules and constraints */
   rules?: string[];
-  /** Custom key-value context */
   custom?: Record<string, unknown>;
 }
 
@@ -102,8 +75,6 @@ export interface FileContext {
   language?: string;
   lastModified?: string;
 }
-
-// ─── Tasks ───────────────────────────────────────────────────────────
 
 export type TaskStatus =
   | "pending"
@@ -124,8 +95,6 @@ export interface TaskNode {
   createdAt: string;
   updatedAt: string;
 }
-
-// ─── Tool System ─────────────────────────────────────────────────────
 
 export interface ToolDefinition {
   name: string;
@@ -154,8 +123,6 @@ export interface ToolResult {
   isError?: boolean;
 }
 
-// ─── Streaming ───────────────────────────────────────────────────────
-
 export type StreamEvent =
   | { type: "text_delta"; content: string }
   | { type: "tool_call_start"; toolCall: ToolCall }
@@ -164,16 +131,12 @@ export type StreamEvent =
   | { type: "message_complete"; message: ManifoldMessage }
   | { type: "error"; error: string };
 
-// ─── Orchestration ───────────────────────────────────────────────────
-
 export type OrchestrationMode =
   | "solo"
   | "collaborative"
   | "autonomous"
   | "consensus"
   | "pipeline";
-
-// ─── Configuration ──────────────────────────────────────────────────
 
 export interface ManifoldConfig {
   project: ProjectConfig;
@@ -198,11 +161,17 @@ export interface ToolsConfig {
   enableShell?: boolean;
   enableGit?: boolean;
   enableMcp?: boolean;
-  /** Directories to exclude from file indexing */
   excludePaths?: string[];
 }
 
-// ─── Session ─────────────────────────────────────────────────────────
+export type PaneStatus = "idle" | "busy";
+
+export interface PaneState {
+  id: number;
+  modelId: string | null;
+  status: PaneStatus;
+  lastActiveAt: string;
+}
 
 export interface Session {
   id: string;
@@ -213,4 +182,7 @@ export interface Session {
   tasks: TaskNode[];
   activeModels: string[];
   orchestrationMode: OrchestrationMode;
+  panes: PaneState[];
+  paneCount: number;
+  activePaneId: number;
 }

@@ -11,17 +11,30 @@ import { ClaudeAdapter } from "@manifold/adapter-claude";
 import type { ManifoldConfig, ModelConfig } from "@manifold/sdk";
 import { App } from "../ui/App.js";
 import { loadConfig } from "../config/index.js";
+import { CodexCliAdapter } from "../portal/codex-adapter.js";
 import {
+  buildEmbeddedPortalModels,
   detectInstalledPortalProviders,
   getPortalProvider,
   launchPortalSession,
   selectPortalProvider,
+  supportsEmbeddedPortalProvider,
 } from "../portal/index.js";
 
 /**
  * Create the appropriate adapter for a model config.
  */
-function createAdapter(id: string, config: ModelConfig) {
+function createAdapter(id: string, config: ModelConfig, projectDir: string) {
+  if (config.providerConfig?.transport === "portal-cli") {
+    switch (config.providerConfig.provider) {
+      case "codex":
+        return new CodexCliAdapter(config, { cwd: projectDir });
+      default:
+        console.warn(`No embedded portal adapter available for "${id}". Skipping.`);
+        return null;
+    }
+  }
+
   const provider = detectProvider(id, config);
 
   switch (provider) {
@@ -68,6 +81,11 @@ export async function runCommand(options: RunOptions): Promise<void> {
   const projectDir = process.cwd();
   const config = await loadConfig(projectDir);
   const installedPortalProviders = await detectInstalledPortalProviders();
+  const embeddedPortalModels = buildEmbeddedPortalModels(installedPortalProviders);
+  config.models = {
+    ...embeddedPortalModels,
+    ...config.models,
+  };
   const requestedPortalProvider = options.model
     ? getPortalProvider(options.model)
     : undefined;
@@ -79,6 +97,9 @@ export async function runCommand(options: RunOptions): Promise<void> {
   const modelKeys = Object.keys(config.models);
 
   if (requestedPortalProvider) {
+    if (supportsEmbeddedPortalProvider(requestedPortalProvider.id)) {
+      options.model = requestedPortalProvider.id;
+    } else {
     const selectedPortal = await selectPortalProvider(
       installedPortalProviders,
       requestedPortalProvider.id
@@ -86,10 +107,11 @@ export async function runCommand(options: RunOptions): Promise<void> {
 
     console.log(`\nLaunching ${selectedPortal.name}...\n`);
     const exitCode = await launchPortalSession(selectedPortal);
-    if (typeof exitCode === "number" && exitCode !== 0) {
-      process.exit(exitCode);
+      if (typeof exitCode === "number" && exitCode !== 0) {
+        process.exit(exitCode);
+      }
+      return;
     }
-    return;
   }
 
   if (modelKeys.length === 0) {
@@ -123,7 +145,7 @@ export async function runCommand(options: RunOptions): Promise<void> {
   });
 
   for (const [id, modelConfig] of Object.entries(config.models)) {
-    const adapter = createAdapter(id, modelConfig);
+    const adapter = createAdapter(id, modelConfig, projectDir);
     if (adapter) {
       orchestrator.registerAdapter(id, adapter);
     }
