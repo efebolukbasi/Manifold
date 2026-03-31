@@ -27,6 +27,8 @@ export type {
   ProjectConfig,
   OrchestrationConfig,
   ToolsConfig,
+  PaneStatus,
+  PaneState,
   Session,
 } from "./types.js";
 
