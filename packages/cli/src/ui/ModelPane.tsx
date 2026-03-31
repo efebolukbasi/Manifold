@@ -1,6 +1,6 @@
 import React from "react";
 import { Box, Text } from "ink";
-import type { ManifoldMessage } from "@manifold/sdk";
+import type { ManifoldMessage, PaneStatus } from "@manifold/sdk";
 import { ChatPane } from "./ChatPane.js";
 
 interface ModelPaneProps {
@@ -8,6 +8,7 @@ interface ModelPaneProps {
   isActive: boolean;
   assignedModelId: string | null;
   assignedModelLabel: string;
+  status: PaneStatus;
   messages: ManifoldMessage[];
 }
 
@@ -16,8 +17,11 @@ export const ModelPane: React.FC<ModelPaneProps> = ({
   isActive,
   assignedModelId,
   assignedModelLabel,
+  status,
   messages,
 }) => {
+  const statusColor = status === "busy" ? "yellow" : "gray";
+
   return (
     <Box
       flexDirection="column"
@@ -36,10 +40,9 @@ export const ModelPane: React.FC<ModelPaneProps> = ({
         </Text>
       </Box>
 
-      <Box paddingX={1}>
-        <Text dimColor>
-          {isActive ? "active input target" : "inactive"}
-        </Text>
+      <Box justifyContent="space-between" paddingX={1}>
+        <Text dimColor>{isActive ? "active input target" : "inactive"}</Text>
+        <Text color={statusColor}>{status}</Text>
       </Box>
 
       <Box flexGrow={1}>

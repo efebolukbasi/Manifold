@@ -1,7 +1,7 @@
 /**
  * @manifold/cli - Main App Component
  *
- * Multi-pane terminal UI with pane-aware model assignment.
+ * Multi-pane terminal UI backed by orchestrator-owned pane state.
  */
 
 import React, { useEffect, useState } from "react";
@@ -10,6 +10,7 @@ import {
   createDelegationMessage,
   createSystemMessage,
   type ManifoldMessage,
+  type PaneState,
 } from "@manifold/sdk";
 import type { Orchestrator } from "@manifold/core";
 import { Header } from "./Header.js";
@@ -21,54 +22,7 @@ interface AppProps {
   orchestrator: Orchestrator;
 }
 
-interface PaneState {
-  id: number;
-  modelId: string | null;
-}
-
 const MAX_LAYOUTS = 4;
-
-function buildInitialPanes(modelIds: string[], activeModel: string | null): PaneState[] {
-  const fallbackModel = activeModel ?? modelIds[0] ?? null;
-
-  return Array.from({ length: MAX_LAYOUTS }, (_, index) => ({
-    id: index + 1,
-    modelId: index === 0 ? fallbackModel : modelIds[index] ?? null,
-  }));
-}
-
-function reconcilePanes(panes: PaneState[], modelIds: string[]): PaneState[] {
-  const fallbackModel = modelIds[0] ?? null;
-
-  return panes.map((pane, index) => {
-    if (pane.modelId && modelIds.includes(pane.modelId)) {
-      return pane;
-    }
-
-    if (index === 0) {
-      return { ...pane, modelId: fallbackModel };
-    }
-
-    return { ...pane, modelId: modelIds[index] ?? pane.modelId ?? null };
-  });
-}
-
-function filterMessagesForPane(
-  messages: ManifoldMessage[],
-  modelId: string | null
-): ManifoldMessage[] {
-  if (!modelId) {
-    return [];
-  }
-
-  return messages.filter((message) => {
-    if (message.to === "all") {
-      return true;
-    }
-
-    return message.from === modelId || message.to === modelId;
-  });
-}
 
 function parsePaneNumber(value: string | undefined): number | null {
   if (!value) {
@@ -89,20 +43,26 @@ function getPaneById(panes: PaneState[], paneId: number): PaneState | undefined 
 
 export const App: React.FC<AppProps> = ({ orchestrator }) => {
   const { exit } = useApp();
-  const readyModels = orchestrator.getReadyModels();
-  const readyModelIds = readyModels.map((model) => model.id);
   const [messages, setMessages] = useState<ManifoldMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
-  const [layoutCount, setLayoutCount] = useState(1);
-  const [activePaneId, setActivePaneId] = useState(1);
-  const [panes, setPanes] = useState<PaneState[]>(() =>
-    buildInitialPanes(readyModelIds, orchestrator.getActiveModel())
-  );
+  const [panes, setPanes] = useState<PaneState[]>(() => orchestrator.getPanes());
+  const [layoutCount, setLayoutCount] = useState(orchestrator.getPaneCount());
+  const [activePaneId, setActivePaneId] = useState(orchestrator.getActivePaneId());
+
+  const readyModels = orchestrator.getReadyModels();
+  const readyModelIds = readyModels.map((model) => model.id);
+
+  function refreshPaneState(): void {
+    setPanes(orchestrator.getPanes());
+    setLayoutCount(orchestrator.getPaneCount());
+    setActivePaneId(orchestrator.getActivePaneId());
+  }
 
   useEffect(() => {
     const handler = (message: ManifoldMessage) => {
       setMessages((prev) => [...prev, message]);
+      refreshPaneState();
     };
 
     orchestrator.messageBus.on("message", handler);
@@ -112,15 +72,8 @@ export const App: React.FC<AppProps> = ({ orchestrator }) => {
   }, [orchestrator]);
 
   useEffect(() => {
-    setPanes((prev) => reconcilePanes(prev, readyModelIds));
+    refreshPaneState();
   }, [readyModels.length]);
-
-  useEffect(() => {
-    const activePane = getPaneById(panes, activePaneId);
-    if (activePane?.modelId) {
-      orchestrator.setActiveModel(activePane.modelId);
-    }
-  }, [activePaneId, orchestrator, panes]);
 
   useInput((input, key) => {
     if (key.ctrl && input === "c") {
@@ -135,18 +88,20 @@ export const App: React.FC<AppProps> = ({ orchestrator }) => {
       return;
     }
 
-    orchestrator.setActiveModel(pane.modelId);
     setIsLoading(true);
     setFeedback(null);
 
     try {
-      await orchestrator.chat(input);
+      const result = orchestrator.chatInPane(paneId, input);
+      refreshPaneState();
+      await result;
     } catch (error) {
       setFeedback(
         error instanceof Error ? error.message : "An unknown error occurred"
       );
     } finally {
       setIsLoading(false);
+      refreshPaneState();
     }
   }
 
@@ -200,10 +155,8 @@ export const App: React.FC<AppProps> = ({ orchestrator }) => {
           return;
         }
 
-        setLayoutCount(nextLayout);
-        if (activePaneId > nextLayout) {
-          setActivePaneId(1);
-        }
+        orchestrator.setPaneCount(nextLayout);
+        refreshPaneState();
         setFeedback(`Layout changed to ${nextLayout} pane(s).`);
         return;
       }
@@ -215,7 +168,8 @@ export const App: React.FC<AppProps> = ({ orchestrator }) => {
           return;
         }
 
-        setActivePaneId(paneId);
+        orchestrator.setActivePane(paneId);
+        refreshPaneState();
         setFeedback(`Focused pane ${paneId}.`);
         return;
       }
@@ -234,16 +188,8 @@ export const App: React.FC<AppProps> = ({ orchestrator }) => {
           return;
         }
 
-        setPanes((prev) =>
-          prev.map((pane) =>
-            pane.id === paneId ? { ...pane, modelId } : pane
-          )
-        );
-
-        if (paneId === activePaneId) {
-          orchestrator.setActiveModel(modelId);
-        }
-
+        orchestrator.assignModelToPane(paneId, modelId);
+        refreshPaneState();
         setFeedback(`Assigned pane ${paneId} to ${modelId}.`);
         return;
       }
@@ -261,12 +207,9 @@ export const App: React.FC<AppProps> = ({ orchestrator }) => {
           return;
         }
 
-        setPanes((prev) =>
-          prev.map((pane) =>
-            pane.id === activePaneId ? { ...pane, modelId } : pane
-          )
-        );
-        orchestrator.setActiveModel(modelId);
+        orchestrator.assignModelToPane(activePaneId, modelId);
+        orchestrator.setActivePane(activePaneId);
+        refreshPaneState();
         setFeedback(`Pane ${activePaneId} now targets ${modelId}.`);
         return;
       }
@@ -364,10 +307,33 @@ export const App: React.FC<AppProps> = ({ orchestrator }) => {
   const visiblePanes = panes.slice(0, layoutCount);
   const topRow = visiblePanes.length <= 2 ? visiblePanes : visiblePanes.slice(0, 2);
   const bottomRow = visiblePanes.length <= 2 ? [] : visiblePanes.slice(2, 4);
-  const activeModelId = getPaneById(panes, activePaneId)?.modelId ?? orchestrator.getActiveModel();
+  const activeModelId =
+    getPaneById(panes, activePaneId)?.modelId ?? orchestrator.getActiveModel();
   const inputPlaceholder = activeModelId
     ? `Send to pane ${activePaneId} (${activeModelId})`
     : `Pane ${activePaneId} has no model. Use /assign <pane> <model-id>.`;
+
+  function renderPane(pane: PaneState): React.ReactElement {
+    return (
+      <ModelPane
+        key={pane.id}
+        paneId={pane.id}
+        isActive={pane.id === activePaneId}
+        assignedModelId={pane.modelId}
+        assignedModelLabel={pane.modelId ?? "unassigned"}
+        status={pane.status}
+        messages={messages.filter((message) => {
+          if (!pane.modelId) {
+            return false;
+          }
+          if (message.to === "all") {
+            return true;
+          }
+          return message.from === pane.modelId || message.to === pane.modelId;
+        })}
+      />
+    );
+  }
 
   return (
     <Box flexDirection="column" height="100%">
@@ -380,38 +346,16 @@ export const App: React.FC<AppProps> = ({ orchestrator }) => {
         modelCount={readyModels.length}
       />
 
-      <ModelStatus
-        models={readyModels}
-        activeModelId={activeModelId}
-      />
+      <ModelStatus models={readyModels} activeModelId={activeModelId} />
 
       <Box flexDirection="column" flexGrow={1} marginY={1}>
         <Box flexDirection="row" flexGrow={1}>
-          {topRow.map((pane, index) => (
-            <ModelPane
-              key={pane.id}
-              paneId={pane.id}
-              isActive={pane.id === activePaneId}
-              assignedModelId={pane.modelId}
-              assignedModelLabel={pane.modelId ?? "unassigned"}
-              messages={filterMessagesForPane(messages, pane.modelId)}
-            />
-          ))}
-          {topRow.length === 1 && layoutCount === 1 ? null : null}
+          {topRow.map(renderPane)}
         </Box>
 
         {bottomRow.length > 0 && (
           <Box flexDirection="row" flexGrow={1} marginTop={1}>
-            {bottomRow.map((pane) => (
-              <ModelPane
-                key={pane.id}
-                paneId={pane.id}
-                isActive={pane.id === activePaneId}
-                assignedModelId={pane.modelId}
-                assignedModelLabel={pane.modelId ?? "unassigned"}
-                messages={filterMessagesForPane(messages, pane.modelId)}
-              />
-            ))}
+            {bottomRow.map(renderPane)}
           </Box>
         )}
       </Box>
