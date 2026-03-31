@@ -2,10 +2,17 @@ import type { LayoutPreset, Theme } from "../themes";
 
 interface StatusBarProps {
   layout: LayoutPreset;
+  activePaneId: number;
+  sessionId?: string;
   theme: Theme;
 }
 
-export function StatusBar({ layout, theme }: StatusBarProps) {
+export function StatusBar({
+  layout,
+  activePaneId,
+  sessionId,
+  theme,
+}: StatusBarProps) {
   return (
     <div
       className="status-bar"
@@ -22,8 +29,10 @@ export function StatusBar({ layout, theme }: StatusBarProps) {
         <span>
           {layout} pane{layout > 1 ? "s" : ""}
         </span>
+        <span>active pane {activePaneId + 1}</span>
       </div>
       <div className="status-right">
+        {sessionId && <span>session {sessionId.slice(0, 8)}</span>}
         <span>v0.1.0</span>
       </div>
     </div>

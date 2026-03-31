@@ -1,10 +1,11 @@
-import { useState } from "react";
 import { TerminalPane } from "./TerminalPane";
 import type { LayoutPreset, Theme } from "../themes";
 
 interface TerminalGridProps {
   layout: LayoutPreset;
   theme: Theme;
+  activePaneId: number;
+  onActivatePane: (paneId: number) => void;
 }
 
 function getGridTemplate(layout: LayoutPreset) {
@@ -22,8 +23,12 @@ function getGridTemplate(layout: LayoutPreset) {
   }
 }
 
-export function TerminalGrid({ layout, theme }: TerminalGridProps) {
-  const [activePaneId, setActivePaneId] = useState(0);
+export function TerminalGrid({
+  layout,
+  theme,
+  activePaneId,
+  onActivatePane,
+}: TerminalGridProps) {
   const { columns, rows } = getGridTemplate(layout);
 
   return (
@@ -40,7 +45,7 @@ export function TerminalGrid({ layout, theme }: TerminalGridProps) {
           key={i}
           paneId={i}
           isActive={activePaneId === i}
-          onActivate={() => setActivePaneId(i)}
+          onActivate={() => onActivatePane(i)}
           theme={theme}
         />
       ))}
