@@ -3,6 +3,7 @@ mod pty;
 mod session;
 
 use serde_json::{json, Value};
+use tauri::path::BaseDirectory;
 use tauri::{Manager, State};
 
 // ── PTY Commands ────────────────────────────────────────────────────
@@ -158,9 +159,12 @@ fn resolve_bridge_script(app_handle: &tauri::AppHandle) -> Result<String, String
         return Ok(manifest_path.to_string_lossy().to_string());
     }
 
-    // Production: look in resources
-    if let Ok(resource_dir) = app_handle.path().resource_dir() {
-        let resource_path: std::path::PathBuf = resource_dir.join("bridge").join("server.cjs");
+    // Production: resolve with Tauri's resource path algorithm so bundled relative
+    // resources like ../bridge/dist/server.cjs map correctly.
+    if let Ok(resource_path) = app_handle
+        .path()
+        .resolve("../bridge/dist/server.cjs", BaseDirectory::Resource)
+    {
         if resource_path.exists() {
             return Ok(resource_path.to_string_lossy().to_string());
         }
