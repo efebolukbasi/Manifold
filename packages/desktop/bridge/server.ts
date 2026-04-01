@@ -19,6 +19,7 @@ import { Orchestrator } from "@manifold/core";
 import { ClaudeAdapter } from "@manifold/adapter-claude";
 import { ClaudeCliAdapter } from "./claude-adapter.js";
 import { GeminiCliAdapter } from "./gemini-adapter.js";
+import { CodexCliAdapter } from "./codex-adapter.js";
 import type { ManifoldConfig, ModelConfig, StreamEvent } from "@manifold/sdk";
 import TOML from "@iarna/toml";
 import { readFile as readFileAsync } from "node:fs/promises";
@@ -242,6 +243,8 @@ function createAdapter(id: string, modelConfig: ModelConfig, projectRoot: string
         return new ClaudeCliAdapter(modelConfig, { cwd: projectRoot });
       case "gemini":
         return new GeminiCliAdapter(modelConfig, { cwd: projectRoot });
+      case "codex":
+        return new CodexCliAdapter(modelConfig, { cwd: projectRoot });
       default:
         console.warn(`No portal adapter for "${id}". Skipping.`);
         return null;
