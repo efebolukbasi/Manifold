@@ -199,11 +199,53 @@ fn find_project_root() -> Result<PathBuf, String> {
     let cwd = std::env::current_dir().map_err(|e| e.to_string())?;
     for candidate in cwd.ancestors() {
         if candidate.join(".git").exists() || candidate.join("manifold.toml").exists() {
-            return Ok(candidate.to_path_buf());
+            return Ok(normalize_root_path(candidate.to_path_buf()));
         }
     }
 
-    Ok(cwd)
+    if should_fallback_to_home(&cwd) {
+        if let Some(home) = home_dir() {
+            return Ok(normalize_root_path(home));
+        }
+    }
+
+    Ok(normalize_root_path(cwd))
+}
+
+fn normalize_root_path(path: PathBuf) -> PathBuf {
+    #[cfg(target_os = "windows")]
+    {
+        let value = path.display().to_string();
+        if value.len() == 2 && value.ends_with(':') {
+            return PathBuf::from(format!("{value}\\"));
+        }
+    }
+
+    path
+}
+
+fn should_fallback_to_home(cwd: &Path) -> bool {
+    let exe_dir = std::env::current_exe()
+        .ok()
+        .and_then(|path| path.parent().map(|parent| parent.to_path_buf()));
+
+    exe_dir
+        .as_ref()
+        .map(|dir| cwd == dir || cwd.starts_with(dir))
+        .unwrap_or(false)
+}
+
+fn home_dir() -> Option<PathBuf> {
+    std::env::var_os("USERPROFILE")
+        .map(PathBuf::from)
+        .or_else(|| std::env::var_os("HOME").map(PathBuf::from))
+        .or_else(|| {
+            let drive = std::env::var_os("HOMEDRIVE")?;
+            let path = std::env::var_os("HOMEPATH")?;
+            let mut home = PathBuf::from(drive);
+            home.push(path);
+            Some(home)
+        })
 }
 
 fn load_latest_session(project_root: &Path) -> Result<Option<SharedSession>, String> {

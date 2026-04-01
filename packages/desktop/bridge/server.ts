@@ -14,7 +14,7 @@
 
 import { createInterface } from "node:readline";
 import { existsSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import { isAbsolute, join, resolve } from "node:path";
 import { Orchestrator } from "@manifold/core";
 import { ClaudeAdapter } from "@manifold/adapter-claude";
 import { ClaudeCliAdapter } from "./claude-adapter.js";
@@ -72,6 +72,19 @@ async function loadConfig(projectDir: string): Promise<ManifoldConfig> {
   }
 
   return autoDetectConfig(projectDir);
+}
+
+function normalizeProjectRoot(projectDir: string): string {
+  const trimmed = projectDir.trim();
+  if (!trimmed) {
+    return trimmed;
+  }
+
+  if (process.platform === "win32" && /^[A-Za-z]:$/.test(trimmed)) {
+    return `${trimmed}\\`;
+  }
+
+  return isAbsolute(trimmed) ? trimmed : resolve(trimmed);
 }
 
 async function isCommandAvailable(command: string): Promise<boolean> {
@@ -267,7 +280,7 @@ let orchestrator: Orchestrator | null = null;
 // ── Action handlers ─────────────────────────────────────────────────
 
 async function handleInitialize(id: string, payload: Record<string, unknown>) {
-  const projectRoot = payload.projectRoot as string;
+  const projectRoot = normalizeProjectRoot((payload.projectRoot as string) || "");
   if (!projectRoot) {
     sendError(id, "projectRoot is required");
     return;
