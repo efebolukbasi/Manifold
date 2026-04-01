@@ -5,6 +5,14 @@ All notable changes to Manifold will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.0-7] - 2026-04-01
+
+### Fixed
+
+- Added a Windows local desktop dev fallback when the MSVC linker is unavailable
+- Built the desktop bridge and workspace dependencies before `tauri dev` starts
+- Switched the desktop bridge bundle to CommonJS and fixed packaged resource lookup for release builds
+
 ## [0.1.0-6] - 2026-04-01
 
 ### Fixed
