@@ -14,6 +14,16 @@
 
 **Manifold** is an open-source terminal interface where multiple AI models (Claude, Gemini, GPT, and more) share the same context, see each other's work, and orchestrate plans together. A multiplexer for AI minds.
 
+## Desktop Beta
+
+Windows desktop beta builds can be published through GitHub Releases.
+
+- Current desktop releases are beta-quality and should be treated as early access builds.
+- The Windows desktop build currently requires Node.js 20+ to be installed on the target machine.
+- Claude Code, Gemini CLI, and Codex integrations still require those CLIs to be installed separately.
+
+Release instructions are documented in `RELEASING.md`.
+
 ## ✨ Why Manifold?
 
 Every existing AI terminal tool either runs **one model at a time** or runs multiple models in **complete isolation**. Manifold is different:

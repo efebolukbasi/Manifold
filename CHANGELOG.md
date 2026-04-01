@@ -5,6 +5,20 @@ All notable changes to Manifold will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.0-beta.1] - 2026-04-01
+
+### Added
+
+- Windows desktop beta release workflow for GitHub Releases
+- Bundled desktop bridge asset in Tauri release artifacts
+- Release documentation for the desktop beta flow
+
+### Notes
+
+- Desktop beta releases currently require Node.js 20+ on the target machine
+- Desktop AI CLI integrations still depend on the corresponding provider CLIs being installed
+- Windows binaries are not code signed yet
+
 ## [0.1.0] - 2026-03-30
 
 ### Added

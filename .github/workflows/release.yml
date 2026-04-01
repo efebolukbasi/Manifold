@@ -1,0 +1,49 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  desktop-windows:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build and publish desktop release
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectPath: packages/desktop
+          tagName: v__VERSION__
+          releaseName: Manifold v__VERSION__ Beta
+          releaseBody: |
+            Windows beta installer artifacts for Manifold v__VERSION__.
+
+            Beta notes:
+            - Node.js 20+ must be installed on the target machine because the desktop app launches a bundled Node bridge.
+            - Claude Code, Gemini CLI, and Codex integrations still depend on those CLIs being installed separately.
+            - Unsigned Windows binaries will show SmartScreen warnings until code signing is configured.
+          releaseDraft: true
+          prerelease: true
