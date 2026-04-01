@@ -1,8 +1,2 @@
 [build]
-target = "x86_64-pc-windows-gnu"
-
-[target.x86_64-pc-windows-gnu]
-rustflags = ["-C", "link-arg=-fuse-ld=lld"]
-
-[env]
-PATH = { value = "C:\\msys64\\ucrt64\\bin;${PATH}", force = false, relative = false }
+target = "x86_64-pc-windows-msvc"
