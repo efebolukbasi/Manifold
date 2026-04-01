@@ -17,6 +17,8 @@ import { readFile, existsSync } from "node:fs";
 import { join } from "node:path";
 import { Orchestrator } from "@manifold/core";
 import { ClaudeAdapter } from "@manifold/adapter-claude";
+import { ClaudeCliAdapter } from "./claude-adapter.js";
+import { GeminiCliAdapter } from "./gemini-adapter.js";
 import type { ManifoldConfig, ModelConfig, StreamEvent } from "@manifold/sdk";
 import TOML from "@iarna/toml";
 import { readFile as readFileAsync } from "node:fs/promises";
@@ -71,7 +73,17 @@ async function loadConfig(projectDir: string): Promise<ManifoldConfig> {
   return autoDetectConfig(projectDir);
 }
 
-function autoDetectConfig(projectDir: string): ManifoldConfig {
+async function isCommandAvailable(command: string): Promise<boolean> {
+  const { spawn: spawnCmd } = await import("node:child_process");
+  const checker = process.platform === "win32" ? "where" : "which";
+  return new Promise((resolve) => {
+    const child = spawnCmd(checker, [command], { stdio: "ignore", windowsHide: true });
+    child.once("error", () => resolve(false));
+    child.once("exit", (code) => resolve(code === 0));
+  });
+}
+
+async function autoDetectConfig(projectDir: string): Promise<ManifoldConfig> {
   const config = { ...DEFAULT_CONFIG, models: {} as Record<string, ModelConfig> };
   config.project.path = projectDir;
 
@@ -86,6 +98,53 @@ function autoDetectConfig(projectDir: string): ManifoldConfig {
     } catch { /* ignore */ }
   }
 
+  // Detect installed CLI portals
+  const [hasClaude, hasGemini, hasCodex] = await Promise.all([
+    isCommandAvailable("claude"),
+    isCommandAvailable("gemini"),
+    isCommandAvailable("codex"),
+  ]);
+
+  if (hasClaude) {
+    config.models["claude-cli"] = {
+      id: "claude-cli",
+      name: "Claude Code",
+      role: "generalist",
+      model: "claude-portal-cli",
+      apiKeyEnv: "CLAUDE_PORTAL_LOGIN",
+      providerConfig: { transport: "portal-cli", provider: "claude" },
+      maxContextTokens: 200000,
+      maxOutputTokens: 16000,
+    };
+  }
+
+  if (hasGemini) {
+    config.models["gemini-cli"] = {
+      id: "gemini-cli",
+      name: "Gemini CLI",
+      role: "generalist",
+      model: "gemini-portal-cli",
+      apiKeyEnv: "GEMINI_PORTAL_LOGIN",
+      providerConfig: { transport: "portal-cli", provider: "gemini" },
+      maxContextTokens: 1000000,
+      maxOutputTokens: 8192,
+    };
+  }
+
+  if (hasCodex) {
+    config.models["codex-cli"] = {
+      id: "codex-cli",
+      name: "Codex",
+      role: "generalist",
+      model: "codex-portal-cli",
+      apiKeyEnv: "CODEX_PORTAL_LOGIN",
+      providerConfig: { transport: "portal-cli", provider: "codex" },
+      maxContextTokens: 128000,
+      maxOutputTokens: 8192,
+    };
+  }
+
+  // Also detect API-key models
   if (process.env.ANTHROPIC_API_KEY) {
     config.models.claude = {
       id: "claude",
@@ -175,7 +234,21 @@ function detectProvider(id: string, config: ModelConfig): string {
   return id;
 }
 
-function createAdapter(id: string, modelConfig: ModelConfig) {
+function createAdapter(id: string, modelConfig: ModelConfig, projectRoot: string) {
+  // Portal CLI adapters (detected CLIs, no API key needed)
+  if (modelConfig.providerConfig?.transport === "portal-cli") {
+    switch (modelConfig.providerConfig.provider) {
+      case "claude":
+        return new ClaudeCliAdapter(modelConfig, { cwd: projectRoot });
+      case "gemini":
+        return new GeminiCliAdapter(modelConfig, { cwd: projectRoot });
+      default:
+        console.warn(`No portal adapter for "${id}". Skipping.`);
+        return null;
+    }
+  }
+
+  // SDK-based adapters (require API keys)
   const provider = detectProvider(id, modelConfig);
   switch (provider) {
     case "claude":
@@ -210,7 +283,7 @@ async function handleInitialize(id: string, payload: Record<string, unknown>) {
     orchestrator = new Orchestrator({ config, projectRoot });
 
     for (const [modelId, modelConfig] of Object.entries(config.models)) {
-      const adapter = createAdapter(modelId, modelConfig);
+      const adapter = createAdapter(modelId, modelConfig, projectRoot);
       if (adapter) {
         orchestrator.registerAdapter(modelId, adapter);
       }

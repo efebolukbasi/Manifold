@@ -12,5 +12,5 @@
     "sourceMap": false,
     "verbatimModuleSyntax": false
   },
-  "include": ["server.ts"]
+  "include": ["server.ts", "claude-adapter.ts", "gemini-adapter.ts"]
 }

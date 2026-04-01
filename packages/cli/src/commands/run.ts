@@ -12,6 +12,8 @@ import type { ManifoldConfig, ModelConfig } from "@manifold/sdk";
 import { App } from "../ui/App.js";
 import { loadConfig } from "../config/index.js";
 import { CodexCliAdapter } from "../portal/codex-adapter.js";
+import { ClaudeCliAdapter } from "../portal/claude-adapter.js";
+import { GeminiCliAdapter } from "../portal/gemini-adapter.js";
 import {
   buildEmbeddedPortalModels,
   detectInstalledPortalProviders,
@@ -29,6 +31,10 @@ function createAdapter(id: string, config: ModelConfig, projectDir: string) {
     switch (config.providerConfig.provider) {
       case "codex":
         return new CodexCliAdapter(config, { cwd: projectDir });
+      case "claude":
+        return new ClaudeCliAdapter(config, { cwd: projectDir });
+      case "gemini":
+        return new GeminiCliAdapter(config, { cwd: projectDir });
       default:
         console.warn(`No embedded portal adapter available for "${id}". Skipping.`);
         return null;
