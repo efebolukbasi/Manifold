@@ -34,7 +34,7 @@ const PORTAL_PROVIDERS: PortalProvider[] = [
   },
 ];
 
-const EMBEDDED_PORTAL_PROVIDER_IDS = new Set<PortalProvider["id"]>(["codex"]);
+const EMBEDDED_PORTAL_PROVIDER_IDS = new Set<PortalProvider["id"]>(["codex", "claude", "gemini"]);
 
 export async function detectInstalledPortalProviders(): Promise<PortalProvider[]> {
   const providers = await Promise.all(
