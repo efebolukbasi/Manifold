@@ -5,6 +5,13 @@ All notable changes to Manifold will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.0-beta.3] - 2026-04-01
+
+### Fixed
+
+- Switched the desktop Rust toolchain configuration from an invalid GNU channel string to a standard stable channel with the Windows MSVC target
+- Aligned the desktop crate version with the beta release version
+
 ## [0.1.0-beta.2] - 2026-04-01
 
 ### Fixed
