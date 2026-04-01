@@ -105,6 +105,54 @@ header {
   border-color: rgba(255, 255, 255, 0.2);
 }
 
+/* ── Window Controls ───────────────────────────────── */
+
+.window-controls {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: 12px;
+}
+
+.window-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 28px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.window-btn-minimize {
+  background: rgba(245, 191, 79, 0.15);
+  color: #f5bf4f;
+}
+
+.window-btn-minimize:hover {
+  background: rgba(245, 191, 79, 0.3);
+}
+
+.window-btn-maximize {
+  background: rgba(62, 196, 109, 0.15);
+  color: #3ec46d;
+}
+
+.window-btn-maximize:hover {
+  background: rgba(62, 196, 109, 0.3);
+}
+
+.window-btn-close {
+  background: rgba(237, 106, 94, 0.15);
+  color: #ed6a5e;
+}
+
+.window-btn-close:hover {
+  background: rgba(237, 106, 94, 0.3);
+}
+
 /* ── Terminal Grid ──────────────────────────────────── */
 
 .terminal-grid {

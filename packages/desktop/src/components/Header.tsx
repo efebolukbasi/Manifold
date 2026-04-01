@@ -1,3 +1,4 @@
+import { getCurrentWindow } from "@tauri-apps/api/window";
 import { themes, type LayoutPreset, type Theme } from "../themes";
 
 interface HeaderProps {
@@ -16,6 +17,8 @@ const LAYOUTS: { value: LayoutPreset; label: string }[] = [
   { value: 9, label: "3x3" },
 ];
 
+const appWindow = getCurrentWindow();
+
 export function Header({
   layout,
   onLayoutChange,
@@ -25,6 +28,7 @@ export function Header({
 }: HeaderProps) {
   return (
     <header
+      data-tauri-drag-region
       style={{ background: theme.colors.headerBg, color: theme.colors.headerFg }}
     >
       <div className="header-left">
@@ -68,6 +72,36 @@ export function Header({
             </option>
           ))}
         </select>
+
+        <div className="window-controls">
+          <button
+            className="window-btn window-btn-minimize"
+            onClick={() => appWindow.minimize()}
+            aria-label="Minimize"
+          >
+            <svg width="10" height="1" viewBox="0 0 10 1">
+              <rect width="10" height="1" fill="currentColor" />
+            </svg>
+          </button>
+          <button
+            className="window-btn window-btn-maximize"
+            onClick={() => appWindow.toggleMaximize()}
+            aria-label="Maximize"
+          >
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+              <rect x="0.5" y="0.5" width="9" height="9" rx="1.5" stroke="currentColor" strokeWidth="1" />
+            </svg>
+          </button>
+          <button
+            className="window-btn window-btn-close"
+            onClick={() => appWindow.close()}
+            aria-label="Close"
+          >
+            <svg width="10" height="10" viewBox="0 0 10 10">
+              <path d="M1 1L9 9M9 1L1 9" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+            </svg>
+          </button>
+        </div>
       </div>
     </header>
   );
