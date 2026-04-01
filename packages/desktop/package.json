@@ -4,13 +4,14 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "dev:prepare": "npm run build:deps && npm run build:bridge",
     "dev:frontend": "vite",
     "build:frontend": "vite build",
-    "build:deps": "pnpm --dir ../.. --filter @manifold/sdk build && pnpm --dir ../.. --filter @manifold/core build && pnpm --dir ../.. --filter @manifold/adapter-claude build",
-    "build:bridge": "tsup --config bridge/tsup.config.ts",
+    "build:deps": "npm --prefix ../sdk run build && npm --prefix ../core run build && npm --prefix ../adapters/claude run build",
+    "build:bridge": "node ./scripts/build-bridge.mjs",
     "build:app": "npm run build:deps && npm run build:bridge && npm run build:frontend",
     "tauri": "tauri",
-    "dev": "tauri dev",
+    "dev": "node ./scripts/tauri-dev.mjs",
     "build": "tauri build",
     "preview": "vite preview"
   },

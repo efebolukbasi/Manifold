@@ -6,7 +6,7 @@
   "build": {
     "frontendDist": "../dist",
     "devUrl": "http://localhost:5173",
-    "beforeDevCommand": "npm run dev:frontend",
+    "beforeDevCommand": "npm run dev:prepare && npm run dev:frontend",
     "beforeBuildCommand": "npm run build:app"
   },
   "app": {
@@ -28,7 +28,7 @@
     "active": true,
     "targets": "all",
     "resources": [
-      "../bridge/dist/server.js"
+      "../bridge/dist/server.cjs"
     ],
     "icon": [
       "icons/32x32.png",

@@ -21,6 +21,7 @@ Windows desktop beta builds can be published through GitHub Releases.
 - Current desktop releases are beta-quality and should be treated as early access builds.
 - The Windows desktop build currently requires Node.js 20+ to be installed on the target machine.
 - Claude Code, Gemini CLI, and Codex integrations still require those CLIs to be installed separately.
+- Local Windows desktop development needs either Visual Studio C++ build tools or the GNU Rust toolchain. See `packages/desktop/README.md`.
 
 Release instructions are documented in `RELEASING.md`.
 

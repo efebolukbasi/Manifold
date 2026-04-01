@@ -134,11 +134,11 @@ fn bridge_shutdown(state: State<bridge::BridgeManager>) -> Result<(), String> {
 // ── Helpers ─────────────────────────────────────────────────────────
 
 fn resolve_bridge_script(app_handle: &tauri::AppHandle) -> Result<String, String> {
-    // In development: look for bridge/dist/server.js relative to the desktop package
+    // In development: look for bridge/dist/server.cjs relative to the desktop package
     // Walk up from the executable to find the packages/desktop directory
     let dev_path = std::env::current_dir()
         .ok()
-        .map(|d| d.join("bridge").join("dist").join("server.js"));
+        .map(|d| d.join("bridge").join("dist").join("server.cjs"));
 
     if let Some(ref path) = dev_path {
         if path.exists() {
@@ -152,7 +152,7 @@ fn resolve_bridge_script(app_handle: &tauri::AppHandle) -> Result<String, String
         .unwrap_or(std::path::Path::new("."))
         .join("bridge")
         .join("dist")
-        .join("server.js");
+        .join("server.cjs");
 
     if manifest_path.exists() {
         return Ok(manifest_path.to_string_lossy().to_string());
@@ -160,13 +160,13 @@ fn resolve_bridge_script(app_handle: &tauri::AppHandle) -> Result<String, String
 
     // Production: look in resources
     if let Ok(resource_dir) = app_handle.path().resource_dir() {
-        let resource_path: std::path::PathBuf = resource_dir.join("bridge").join("server.js");
+        let resource_path: std::path::PathBuf = resource_dir.join("bridge").join("server.cjs");
         if resource_path.exists() {
             return Ok(resource_path.to_string_lossy().to_string());
         }
     }
 
-    Err("Could not find bridge/dist/server.js. Run 'pnpm run build:bridge' first.".to_string())
+    Err("Could not find bridge/dist/server.cjs. Run 'npm run build:bridge' first.".to_string())
 }
 
 // ── App Entry ───────────────────────────────────────────────────────
