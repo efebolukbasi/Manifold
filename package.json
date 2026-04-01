@@ -1,6 +1,6 @@
 {
   "name": "manifold",
-  "version": "0.1.0-beta.3",
+  "version": "0.1.0-beta.4",
   "private": true,
   "description": "A unified AI terminal where multiple AI models share the same brain",
   "author": "efebolukbasi",

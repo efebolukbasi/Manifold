@@ -1,8 +1,8 @@
 import { defineConfig } from "tsup";
 
 export default defineConfig({
-  entry: ["server.ts"],
-  outDir: "dist",
+  entry: ["bridge/server.ts"],
+  outDir: "bridge/dist",
   format: ["esm"],
   platform: "node",
   target: "node20",

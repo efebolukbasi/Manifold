@@ -13,7 +13,7 @@
  */
 
 import { createInterface } from "node:readline";
-import { readFile, existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { Orchestrator } from "@manifold/core";
 import { ClaudeAdapter } from "@manifold/adapter-claude";
@@ -92,9 +92,7 @@ async function autoDetectConfig(projectDir: string): Promise<ManifoldConfig> {
   const pkgPath = join(projectDir, "package.json");
   if (existsSync(pkgPath)) {
     try {
-      const { name } = JSON.parse(
-        require("node:fs").readFileSync(pkgPath, "utf-8"),
-      );
+      const { name } = JSON.parse(readFileSync(pkgPath, "utf-8"));
       if (name) config.project.name = name;
     } catch { /* ignore */ }
   }
