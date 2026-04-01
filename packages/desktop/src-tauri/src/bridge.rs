@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 use std::io::{BufRead, BufReader, Write};
 use std::process::{Child, Command, Stdio};
 use std::sync::atomic::{AtomicU32, Ordering};
@@ -14,6 +14,7 @@ pub struct BridgeManager {
     child: Mutex<Option<Child>>,
     stdin: Mutex<Option<Box<dyn Write + Send>>>,
     pending: Arc<Mutex<HashMap<String, oneshot::Sender<Value>>>>,
+    stderr_tail: Arc<Mutex<VecDeque<String>>>,
     next_id: AtomicU32,
 }
 
@@ -23,6 +24,7 @@ impl BridgeManager {
             child: Mutex::new(None),
             stdin: Mutex::new(None),
             pending: Arc::new(Mutex::new(HashMap::new())),
+            stderr_tail: Arc::new(Mutex::new(VecDeque::with_capacity(16))),
             next_id: AtomicU32::new(1),
         }
     }
@@ -45,11 +47,15 @@ impl BridgeManager {
             let _ = child.kill();
         }
 
+        if let Ok(mut tail) = self.stderr_tail.lock() {
+            tail.clear();
+        }
+
         let mut child = Command::new("node")
             .arg(bridge_script)
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
-            .stderr(Stdio::inherit()) // Bridge logs go to Tauri console
+            .stderr(Stdio::piped())
             .spawn()
             .map_err(|e| format!("Failed to spawn bridge process: {}. Is Node.js installed?", e))?;
 
@@ -57,6 +63,10 @@ impl BridgeManager {
             .stdout
             .take()
             .ok_or("Failed to capture bridge stdout")?;
+        let stderr = child
+            .stderr
+            .take()
+            .ok_or("Failed to capture bridge stderr")?;
         let child_stdin = child
             .stdin
             .take()
@@ -67,8 +77,30 @@ impl BridgeManager {
 
         *self.stdin.lock().map_err(|e| e.to_string())? = Some(Box::new(child_stdin));
 
+        // Capture bridge stderr so packaged startup failures can be surfaced in the UI.
+        let stderr_tail = Arc::clone(&self.stderr_tail);
+        std::thread::spawn(move || {
+            let reader = BufReader::new(stderr);
+            for line in reader.lines() {
+                let line = match line {
+                    Ok(l) => l,
+                    Err(_) => break,
+                };
+
+                eprintln!("[bridge] {}", line);
+
+                if let Ok(mut tail) = stderr_tail.lock() {
+                    if tail.len() >= 16 {
+                        tail.pop_front();
+                    }
+                    tail.push_back(line);
+                }
+            }
+        });
+
         // Spawn reader thread
         let pending = Arc::clone(&self.pending);
+        let stderr_tail = Arc::clone(&self.stderr_tail);
         std::thread::spawn(move || {
             let reader = BufReader::new(stdout);
             for line in reader.lines() {
@@ -128,6 +160,36 @@ impl BridgeManager {
                                 }
                             }
                         }
+                    }
+                }
+            }
+
+            // Resolve any in-flight requests so the frontend doesn't hang forever
+            // if the bridge exits during startup.
+            let stderr_summary = stderr_tail
+                .lock()
+                .ok()
+                .map(|tail| tail.iter().cloned().collect::<Vec<_>>().join("\n"))
+                .unwrap_or_default();
+
+            if let Ok(mut map) = pending.lock() {
+                let req_ids: Vec<String> = map.keys().cloned().collect();
+                for req_id in req_ids {
+                    if let Some(tx) = map.remove(&req_id) {
+                        let message = if stderr_summary.trim().is_empty() {
+                            "Bridge process exited before responding.".to_string()
+                        } else {
+                            format!(
+                                "Bridge process exited before responding.\n{}",
+                                stderr_summary
+                            )
+                        };
+
+                        let _ = tx.send(serde_json::json!({
+                            "id": req_id,
+                            "event": "error",
+                            "message": message,
+                        }));
                     }
                 }
             }
