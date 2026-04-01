@@ -29,8 +29,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build
-        run: pnpm build
+      - name: Build workspace packages
+        run: pnpm --filter '!@manifold/desktop' build
+
+      - name: Build desktop app assets
+        run: pnpm --filter @manifold/desktop build:app
 
       - name: Type check
         run: pnpm typecheck
