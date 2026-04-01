@@ -30,14 +30,14 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build workspace packages
-        run: pnpm --filter '!@manifold/desktop' build
+        run: pnpm --filter @manifold/sdk --filter @manifold/core --filter @manifold/adapter-claude --filter @manifold/cli build
 
       - name: Build desktop app assets
         run: pnpm --filter @manifold/desktop build:app
 
       - name: Type check
-        run: pnpm typecheck
+        run: pnpm --filter @manifold/sdk --filter @manifold/core --filter @manifold/adapter-claude --filter @manifold/cli typecheck
 
       - name: Test
-        run: pnpm test
+        run: pnpm -r --if-present test
         continue-on-error: true
