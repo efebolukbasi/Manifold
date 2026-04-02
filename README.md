@@ -10,6 +10,10 @@
 
 </div>
 
+<p align="center">
+  <img src="docs/demo.gif" alt="Manifold Demo" width="720" />
+</p>
+
 ---
 
 **Manifold** is an open-source terminal interface where multiple AI models (Claude, Gemini, GPT, and more) share the same context, see each other's work, and orchestrate plans together. A multiplexer for AI minds.
