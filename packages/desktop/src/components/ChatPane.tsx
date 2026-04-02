@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { Theme } from "../themes";
 import type { ChatMessage } from "../session";
+import { Markdown } from "./Markdown";
 
 interface ChatPaneProps {
   paneId: number;
@@ -147,19 +148,23 @@ export function ChatPane({
             >
               {msg.role === "user" ? "You" : modelName || "Assistant"}
             </span>
-            <div
-              style={{
-                fontSize: 13,
-                lineHeight: 1.5,
-                color: theme.colors.fg,
-                whiteSpace: "pre-wrap",
-                wordBreak: "break-word",
-                fontFamily:
-                  "'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace",
-              }}
-            >
-              {msg.content}
-            </div>
+            {msg.role === "assistant" ? (
+              <Markdown content={msg.content} theme={theme} />
+            ) : (
+              <div
+                style={{
+                  fontSize: 13,
+                  lineHeight: 1.5,
+                  color: theme.colors.fg,
+                  whiteSpace: "pre-wrap",
+                  wordBreak: "break-word",
+                  fontFamily:
+                    "'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace",
+                }}
+              >
+                {msg.content}
+              </div>
+            )}
           </div>
         ))}
 
