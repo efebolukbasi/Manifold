@@ -52,6 +52,8 @@ impl BridgeManager {
         }
 
         let mut child = Command::new("node")
+            .arg("--eval")
+            .arg("require(process.argv[1])")
             .arg(bridge_script)
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
