@@ -26,6 +26,7 @@ export function TerminalPane({
 }: TerminalPaneProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const termRef = useRef<Terminal | null>(null);
+  const fitAddonRef = useRef<FitAddon | null>(null);
 
   // Mount terminal + PTY
   useEffect(() => {
@@ -50,6 +51,7 @@ export function TerminalPane({
     });
 
     const fitAddon = new FitAddon();
+    fitAddonRef.current = fitAddon;
     terminal.loadAddon(fitAddon);
     terminal.open(containerRef.current);
 
@@ -141,6 +143,7 @@ export function TerminalPane({
         void invoke("close_pty", { id: ptyId });
         ptyId = null;
       }
+      fitAddonRef.current = null;
       termRef.current = null;
       terminal.dispose();
     };
@@ -163,6 +166,7 @@ export function TerminalPane({
   useEffect(() => {
     if (isActive && termRef.current) {
       termRef.current.focus();
+      requestAnimationFrame(() => fitAddonRef.current?.fit());
     }
   }, [isActive]);
 
