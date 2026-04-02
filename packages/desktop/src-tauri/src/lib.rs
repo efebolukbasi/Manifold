@@ -166,7 +166,12 @@ fn resolve_bridge_script(app_handle: &tauri::AppHandle) -> Result<String, String
         .resolve("../bridge/dist/server.cjs", BaseDirectory::Resource)
     {
         if resource_path.exists() {
-            return Ok(resource_path.to_string_lossy().to_string());
+            // On Windows, Tauri's resolve() can produce \\?\ extended-length paths.
+            // Node.js require() misinterprets these as UNC paths, causing EISDIR errors.
+            let path_str = resource_path.to_string_lossy().to_string();
+            #[cfg(windows)]
+            let path_str = path_str.strip_prefix("\\\\?\\").unwrap_or(&path_str).to_string();
+            return Ok(path_str);
         }
     }
 
