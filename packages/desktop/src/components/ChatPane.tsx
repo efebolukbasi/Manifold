@@ -62,6 +62,8 @@ export function ChatPane({
         background: theme.terminal.background,
         display: "flex",
         flexDirection: "column",
+        width: "100%",
+        height: "100%",
         overflow: "hidden",
         position: "relative",
         border: "1px solid",

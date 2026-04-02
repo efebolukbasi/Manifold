@@ -68,7 +68,7 @@ export function TerminalGrid({
         const isActive = activePaneId === i;
 
         return (
-          <div key={i} style={{ position: "relative", overflow: "hidden" }}>
+          <div key={i} style={{ position: "relative", overflow: "hidden", minHeight: 0 }}>
             {/* Mode toggle button */}
             {bridgeStatus === "ready" && (
               <button
